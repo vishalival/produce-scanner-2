@@ -267,6 +267,73 @@
             }
         }
 
+        .confidence-score {
+            margin-top: 15px;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .action-recommendations {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .action-title {
+            font-size: 18px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        @media (min-width: 768px) {
+            .action-title {
+                font-size: 20px;
+            }
+        }
+
+        .action-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .action-item {
+            font-size: 15px;
+            margin-bottom: 10px;
+            padding-left: 24px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .action-item:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-weight: 700;
+        }
+
+        @media (min-width: 768px) {
+            .action-item {
+                font-size: 16px;
+            }
+        }
+
         .price-info {
             margin-top: 20px;
             padding-top: 20px;
@@ -432,6 +499,16 @@
         <div class="result-card hidden" id="resultCard">
             <div class="ripeness-level" id="ripenessLevel"></div>
             <div class="discount" id="discount"></div>
+            <div class="confidence-score">
+                <div>Confidence: <span id="confidenceValue">0%</span></div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="action-recommendations">
+                <div class="action-title">Action Recommendations</div>
+                <ul class="action-list" id="actionList"></ul>
+            </div>
             <div class="price-info hidden" id="priceInfo">
                 <div class="price-row">
                     <span>Original Price:</span>
@@ -496,6 +573,34 @@
             reader.readAsDataURL(file);
         });
 
+        function getActionRecommendations(ripeness, discount) {
+            const recommendations = [];
+            
+            if (ripeness === "Just Ripe") {
+                recommendations.push("Perfect for immediate consumption");
+                recommendations.push("Store at room temperature for 1-2 days");
+                recommendations.push("Best quality - no discount needed");
+            } else if (ripeness === "Peak Ripeness") {
+                recommendations.push("Consume within 24 hours for best taste");
+                if (discount > 0) {
+                    recommendations.push(`Great deal with ${discount}% discount`);
+                }
+                recommendations.push("Store in refrigerator to slow ripening");
+            } else if (ripeness === "Overripe") {
+                recommendations.push("Use immediately or within a few hours");
+                recommendations.push(`Take advantage of ${discount}% discount`);
+                recommendations.push("Perfect for smoothies, baking, or preserves");
+                recommendations.push("Check for any soft spots before purchasing");
+            } else if (ripeness === "Past Peak") {
+                recommendations.push("Best for cooking or processing only");
+                recommendations.push(`Significant ${discount}% discount available`);
+                recommendations.push("Inspect carefully for spoilage");
+                recommendations.push("Use same day or discard");
+            }
+            
+            return recommendations;
+        }
+
         function analyzeImage() {
             // Show loading
             const loading = document.getElementById('loading');
@@ -535,9 +640,25 @@
                     colorClass = 'yellow';
                 }
 
+                // Generate confidence score (75-98%)
+                const confidenceScore = Math.floor(Math.random() * 24) + 75;
+                
+                // Generate action recommendations based on ripeness
+                const recommendations = getActionRecommendations(randomRipeness, randomDiscount);
+
                 // Update result card
                 document.getElementById('ripenessLevel').textContent = randomRipeness;
                 document.getElementById('discount').textContent = randomDiscount > 0 ? `${randomDiscount}% Discount` : 'No Discount';
+                
+                // Update confidence score
+                document.getElementById('confidenceValue').textContent = `${confidenceScore}%`;
+                setTimeout(() => {
+                    document.getElementById('confidenceFill').style.width = `${confidenceScore}%`;
+                }, 100);
+                
+                // Update action recommendations
+                const actionList = document.getElementById('actionList');
+                actionList.innerHTML = recommendations.map(rec => `<li class="action-item">${rec}</li>`).join('');
                 
                 // Update price info
                 const priceInfo = document.getElementById('priceInfo');
@@ -561,6 +682,7 @@
                         discount: randomDiscount,
                         originalPrice: originalPrice,
                         finalPrice: finalPrice,
+                        confidence: confidenceScore,
                         timestamp: new Date().toLocaleString()
                     };
                     scanHistory.unshift(historyItem);
@@ -598,11 +720,12 @@
                 const fruitParts = item.fruit.split(' ');
                 const fruitEmoji = fruitParts[0] || '🍎';
                 const fruitName = fruitParts.slice(1).join(' ') || item.fruit;
+                const confidence = item.confidence || 0;
                 return `
                     <div class="history-item">
                         <div class="history-item-info">
                             <div class="history-item-fruit">${fruitEmoji} ${fruitName}</div>
-                            <div class="history-item-details">${item.ripeness} • ${item.discount}% off • ${item.timestamp}</div>
+                            <div class="history-item-details">${item.ripeness} • ${item.discount}% off • ${confidence}% confidence • ${item.timestamp}</div>
                         </div>
                         <div class="history-item-price">
                             ${item.originalPrice > 0 ? `$${item.finalPrice.toFixed(2)}` : 'N/A'}

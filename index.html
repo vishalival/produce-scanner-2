@@ -1,10 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Produce Freshness Scanner</title>
     <style>
+        :root {
+            --cream: #f9f1e4;
+            --soft-yellow: #ffe3b3;
+            --card: #fff9ef;
+            --text-dark: #181512;
+            --text-muted: #7a6f63;
+            --accent: #ff9f66;
+            --border: rgba(0, 0, 0, 0.08);
+            --nav-bg: #fff5e3;
+            --discount-green: #41c17c;
+            --discount-light: #92d997;
+            --discount-orange: #ffa756;
+            --discount-red: #f26d6d;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,731 +27,1015 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f5f7fa;
+            font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--cream);
+            color: var(--text-dark);
             min-height: 100vh;
-            padding: 20px;
+            letter-spacing: -0.2px;
+        }
+
+        #root {
+            min-height: 100vh;
+        }
+
+        .app-shell {
+            max-width: 520px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: var(--cream);
             display: flex;
             flex-direction: column;
+        }
+
+        header {
+            padding: 32px 20px 10px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        header span {
+            font-size: 14px;
+            color: var(--text-muted);
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+        }
+
+        .page-content {
+            flex: 1;
+            padding: 0 20px 120px;
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 45px rgba(215, 185, 147, 0.35);
+            border: 1px solid var(--border);
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        select,
+        input {
+            width: 100%;
+            border-radius: 16px;
+            border: 2px solid transparent;
+            background: white;
+            padding: 14px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+            transition: border 0.2s ease, transform 0.2s ease;
+        }
+
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: #ffd38a;
+            transform: translateY(-1px);
+        }
+
+        .camera-card {
+            position: relative;
+            background: white;
+            border-radius: 28px;
+            padding: 18px;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .camera-preview {
+            flex: 1;
+            border-radius: 22px;
+            background: #d2c5b6;
+            overflow: hidden;
+            display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        @media (min-width: 768px) {
-            body {
-                padding: 40px 20px;
-            }
-        }
-
-        .container {
-            max-width: 600px;
-            width: 100%;
-            background: white;
-            border-radius: 20px;
-            padding: 30px 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-        }
-
-        @media (min-width: 768px) {
-            .container {
-                padding: 40px;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-            }
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 26px;
-        }
-
-        @media (min-width: 768px) {
-            h1 {
-                margin-bottom: 40px;
-                font-size: 32px;
-            }
-        }
-
-        .fruit-select-section {
-            margin-bottom: 30px;
-        }
-
-        @media (min-width: 768px) {
-            .fruit-select-section {
-                margin-bottom: 40px;
-            }
-        }
-
-        .fruit-select-label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: #333;
-            font-size: 16px;
-        }
-
-        .fruit-select {
-            width: 100%;
-            padding: 14px 16px;
-            font-size: 16px;
-            border: 3px solid #ddd;
-            border-radius: 12px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 16px center;
-            padding-right: 40px;
-        }
-
-        .fruit-select:hover {
-            border-color: #667eea;
-        }
-
-        .fruit-select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .price-input-section {
-            margin-bottom: 20px;
-        }
-
-        .price-input-label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: #333;
-            font-size: 16px;
-        }
-
-        .price-input {
-            width: 100%;
-            padding: 14px 16px;
-            font-size: 16px;
-            border: 3px solid #ddd;
-            border-radius: 12px;
-            background: white;
-            transition: all 0.3s;
-        }
-
-        .price-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .upload-section {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-
-        .file-input-wrapper input[type=file] {
-            position: absolute;
-            opacity: 0;
+        .camera-preview img {
             width: 100%;
             height: 100%;
-            cursor: pointer;
+            object-fit: cover;
         }
 
-        .upload-btn {
-            padding: 14px 32px;
-            font-size: 16px;
-            background: #667eea;
-            color: white;
+        .camera-controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .circle-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
             border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        @media (min-width: 768px) {
-            .upload-btn {
-                padding: 15px 40px;
-                font-size: 18px;
-            }
-        }
-
-        .upload-btn:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .image-preview {
-            margin: 30px 0;
-            text-align: center;
-        }
-
-        .image-preview img {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .loading {
-            text-align: center;
-            padding: 30px;
-            font-size: 20px;
-            color: #667eea;
-            font-weight: 600;
-        }
-
-        @media (min-width: 768px) {
-            .loading {
-                padding: 40px;
-                font-size: 24px;
-            }
-        }
-
-        .result-card {
-            margin-top: 30px;
-            padding: 25px;
-            border-radius: 12px;
-            text-align: center;
+            background: #1f1c17;
             color: white;
-            font-weight: 600;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-            animation: fadeIn 0.5s;
+            font-size: 28px;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
         }
 
-        @media (min-width: 768px) {
-            .result-card {
-                padding: 30px;
-            }
+        .secondary-btn {
+            border-radius: 50%;
+            width: 52px;
+            height: 52px;
+            border: 1px dashed #c1b5ab;
+            background: transparent;
+            font-size: 22px;
+            color: #7f736a;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .result-card.green {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        }
-
-        .result-card.orange {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        .result-card.red {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-
-        .result-card.yellow {
-            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-        }
-
-        .ripeness-level {
-            font-size: 24px;
-            margin-bottom: 15px;
-        }
-
-        @media (min-width: 768px) {
-            .ripeness-level {
-                font-size: 28px;
-            }
-        }
-
-        .discount {
-            font-size: 30px;
-            margin-top: 10px;
-        }
-
-        @media (min-width: 768px) {
-            .discount {
-                font-size: 36px;
-            }
-        }
-
-        .confidence-score {
-            margin-top: 15px;
+        .primary-btn,
+        .ghost-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
             font-size: 16px;
-            opacity: 0.9;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 8px;
+        }
+
+        .primary-btn {
+            background: #1f1c17;
+            color: white;
+        }
+
+        .ghost-btn {
+            background: transparent;
+            border: 1px solid #d9cbbf;
+            color: #3b332c;
+        }
+
+        .primary-btn:active,
+        .ghost-btn:active {
+            transform: translateY(1px);
+        }
+
+        .analysis-grid {
+            display: grid;
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .analysis-card {
+            border-radius: 18px;
+            padding: 16px;
+            background: white;
+            border: 1px solid var(--border);
+        }
+
+        .analysis-card h3 {
+            font-size: 16px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stars {
+            color: #f4b73f;
+            font-size: 20px;
+        }
+
+        .badge {
+            align-self: flex-start;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1f1c17;
+        }
+
+        .badge.green { background: #d8f5e7; color: #097c44; }
+        .badge.light { background: #e5f7dd; color: #437841; }
+        .badge.orange { background: #ffe2cc; color: #9b5103; }
+        .badge.red { background: #ffe5e5; color: #a42020; }
+
+        .result-hero {
+            background: white;
+            border-radius: 32px;
+            padding: 24px;
+            display: grid;
+            gap: 14px;
+            border: 1px solid var(--border);
+        }
+
+        .result-image {
+            border-radius: 28px;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .result-image img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+
+        .result-title {
+            font-size: 26px;
+            font-weight: 800;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-list {
+            display: grid;
+            gap: 8px;
+            font-size: 15px;
+        }
+
+        .summary-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 18px;
+            border: 1px solid var(--border);
+            font-size: 15px;
+            color: #443a33;
+        }
+
+        .confidence {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
         }
 
         .confidence-bar {
             width: 100%;
             height: 8px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
-            margin-top: 8px;
+            border-radius: 999px;
+            background: #f0e1cf;
+            margin-top: 6px;
             overflow: hidden;
         }
 
         .confidence-fill {
             height: 100%;
-            background: white;
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-
-        .action-recommendations {
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 2px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .action-title {
-            font-size: 18px;
-            margin-bottom: 12px;
-            font-weight: 700;
-        }
-
-        @media (min-width: 768px) {
-            .action-title {
-                font-size: 20px;
-            }
-        }
-
-        .action-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .action-item {
-            font-size: 15px;
-            margin-bottom: 10px;
-            padding-left: 24px;
-            position: relative;
-            line-height: 1.5;
-        }
-
-        .action-item:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            font-weight: 700;
-        }
-
-        @media (min-width: 768px) {
-            .action-item {
-                font-size: 16px;
-            }
-        }
-
-        .price-info {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .price-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-
-        .price-row.final {
-            font-size: 24px;
-            font-weight: 700;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 2px solid rgba(255, 255, 255, 0.3);
-        }
-
-        @media (min-width: 768px) {
-            .price-row {
-                font-size: 20px;
-            }
-            .price-row.final {
-                font-size: 28px;
-            }
-        }
-
-        .scan-another-btn {
-            margin-top: 20px;
-            padding: 12px 30px;
-            font-size: 16px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid white;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            width: 100%;
-        }
-
-        .scan-another-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .history-section {
-            margin-top: 40px;
-            padding-top: 30px;
-            border-top: 2px solid #e0e0e0;
-        }
-
-        .history-title {
-            font-size: 22px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        @media (min-width: 768px) {
-            .history-title {
-                font-size: 26px;
-            }
+            border-radius: 999px;
+            background: #1f1c17;
+            transition: width 0.4s ease;
         }
 
         .history-list {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
+            margin-top: 18px;
         }
 
-        .history-item {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 15px;
+        .history-card {
             display: flex;
-            justify-content: space-between;
+            gap: 12px;
+            background: white;
+            border-radius: 18px;
+            padding: 12px;
+            border: 1px solid var(--border);
             align-items: center;
-            border: 2px solid #e0e0e0;
         }
 
-        .history-item-info {
+        .history-thumb {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #efe0ca;
+            flex-shrink: 0;
+        }
+
+        .history-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .history-info {
             flex: 1;
         }
 
-        .history-item-fruit {
-            font-weight: 600;
-            color: #333;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .history-item-details {
-            font-size: 14px;
-            color: #666;
-        }
-
-        .history-item-price {
-            text-align: right;
+        .history-title {
             font-weight: 700;
-            color: #667eea;
-            font-size: 18px;
+            font-size: 15px;
         }
 
-        .history-empty {
+        .history-meta {
+            font-size: 13px;
+            color: #7f736a;
+        }
+
+        .history-price {
+            font-weight: 800;
+                font-size: 16px;
+        }
+
+        .chart-card {
+            padding: 18px;
+            border-radius: 22px;
+            background: white;
+            border: 1px solid var(--border);
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .bar {
+            height: 12px;
+            border-radius: 999px;
+            background: #f1dcc5;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
+
+        .pie {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+        }
+
+        .pie-legend {
+            display: grid;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 520px;
+            margin: 0 auto;
+            background: var(--nav-bg);
+            border-top-left-radius: 30px;
+            border-top-right-radius: 30px;
+            padding: 12px 10px 22px;
+            box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .nav-btn {
+            text-decoration: none;
+            color: #8c8176;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 13px;
+            gap: 4px;
+            padding: 8px 10px;
+            border-radius: 16px;
+        }
+
+        .nav-btn.active {
+            background: white;
+            color: #1f1c17;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 14px;
+        }
+
+        .empty-state {
             text-align: center;
-            color: #999;
-            padding: 30px;
-            font-style: italic;
+            padding: 40px 20px;
+            color: #8f8478;
+            font-size: 15px;
         }
 
-        .hidden {
-            display: none;
+        .analyzing-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+        }
+
+        .spinner {
+            width: 42px;
+            height: 42px;
+            border: 4px solid #f0e5d6;
+            border-top-color: #1f1c17;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 400px) {
+            header {
+                padding: 24px 16px 6px;
+            }
+            header h1 {
+                font-size: 24px;
+            }
+            .page-content {
+                padding: 0 14px 105px;
+            }
+            .panel {
+                padding: 18px;
+                border-radius: 20px;
+            }
+            .camera-card {
+                padding: 14px;
+                border-radius: 22px;
+            }
+            .circle-btn {
+                width: 60px;
+                height: 60px;
+            }
+            .secondary-btn {
+                width: 46px;
+                height: 46px;
+            }
+            .result-title {
+                font-size: 22px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            .star-row {
+                flex-direction: column;
+            }
+            .primary-btn,
+            .ghost-btn {
+                font-size: 15px;
+                padding: 14px;
+            }
+            nav {
+                border-top-left-radius: 24px;
+                border-top-right-radius: 24px;
+                padding-bottom: 18px;
+            }
+        }
+
+        @media (min-width: 600px) {
+            header {
+                padding-top: 48px;
+            }
+            .page-content {
+                padding-bottom: 130px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Produce Freshness Scanner</h1>
+    <div id="root"></div>
+    <script type="module">
+        import React from "https://esm.sh/react@18.2.0";
+        import { createRoot } from "https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0";
+        import {
+            HashRouter,
+            Routes,
+            Route,
+            Navigate,
+            Link,
+            useNavigate,
+            useLocation
+        } from "https://esm.sh/react-router-dom@6.22.2?deps=react@18.2.0";
 
-        <div class="fruit-select-section">
-            <label class="fruit-select-label" for="fruitSelect">Select Produce Type</label>
-            <select class="fruit-select" id="fruitSelect">
-                <option value="">-- Select a fruit --</option>
-                <option value="banana">🍌 Banana</option>
-                <option value="apple">🍎 Apple</option>
-                <option value="avocado">🥑 Avocado</option>
-                <option value="orange">🍊 Orange</option>
-                <option value="strawberry">🍓 Strawberry</option>
-                <option value="grape">🍇 Grape</option>
-                <option value="mango">🥭 Mango</option>
-                <option value="pineapple">🍍 Pineapple</option>
-                <option value="watermelon">🍉 Watermelon</option>
-                <option value="peach">🍑 Peach</option>
-                <option value="pear">🍐 Pear</option>
-                <option value="cherry">🍒 Cherry</option>
-            </select>
-        </div>
+        const { useState, useEffect, useMemo } = React;
+        const h = React.createElement;
 
-        <div class="price-input-section">
-            <label class="price-input-label" for="priceInput">Original Price ($)</label>
-            <input type="number" class="price-input" id="priceInput" placeholder="Enter original price" min="0" step="0.01">
-        </div>
+        const produceOptions = [
+            { value: "banana", label: "Banana", icon: "🍌" },
+            { value: "apple", label: "Apple", icon: "🍎" },
+            { value: "avocado", label: "Avocado", icon: "🥑" },
+            { value: "tomato", label: "Tomato", icon: "🍅" },
+            { value: "orange", label: "Orange", icon: "🍊" },
+            { value: "strawberry", label: "Strawberry", icon: "🍓" },
+            { value: "mango", label: "Mango", icon: "🥭" }
+        ];
 
-        <div class="upload-section">
-            <div class="file-input-wrapper">
-                <input type="file" id="imageInput" accept="image/*">
-                <button class="upload-btn">Upload Photo</button>
-            </div>
-        </div>
+        const defaultImage = "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?auto=format&fit=crop&w=600&q=60";
 
-        <div class="image-preview hidden" id="imagePreview">
-            <img id="previewImage" src="" alt="Preview">
-        </div>
+        const navItems = [
+            { path: "/home", label: "Home", icon: "🏠" },
+            { path: "/scan", label: "Scan", icon: "📷" },
+            { path: "/history", label: "History", icon: "🕓" },
+            { path: "/dashboard", label: "Dashboard", icon: "📊" },
+            { path: "/settings", label: "Settings", icon: "⚙️" }
+        ];
 
-        <div class="loading hidden" id="loading">
-            Analyzing...
-        </div>
+        const discountPalette = {
+            0: { badge: "green", color: "var(--discount-green)", label: "Peak Ripeness - Full Price" },
+            10: { badge: "light", color: "var(--discount-light)", label: "Just Ripe - 10% Off" },
+            30: { badge: "orange", color: "var(--discount-orange)", label: "Sell Today - 30% Off" },
+            50: { badge: "red", color: "var(--discount-red)", label: "Past Peak - 50% Off" }
+        };
 
-        <div class="result-card hidden" id="resultCard">
-            <div class="ripeness-level" id="ripenessLevel"></div>
-            <div class="discount" id="discount"></div>
-            <div class="confidence-score">
-                <div>Confidence: <span id="confidenceValue">0%</span></div>
-                <div class="confidence-bar">
-                    <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
-                </div>
-            </div>
-            <div class="action-recommendations">
-                <div class="action-title">Action Recommendations</div>
-                <ul class="action-list" id="actionList"></ul>
-            </div>
-            <div class="price-info hidden" id="priceInfo">
-                <div class="price-row">
-                    <span>Original Price:</span>
-                    <span id="originalPriceDisplay">$0.00</span>
-                </div>
-                <div class="price-row">
-                    <span>Discount:</span>
-                    <span id="discountAmountDisplay">-$0.00</span>
-                </div>
-                <div class="price-row final">
-                    <span>Final Price:</span>
-                    <span id="finalPriceDisplay">$0.00</span>
-                </div>
-            </div>
-            <button class="scan-another-btn" id="scanAnotherBtn">Scan Another</button>
-        </div>
+        const weightedStar = () => {
+            const weights = [0.05, 0.1, 0.2, 0.35, 0.3];
+            const r = Math.random();
+            let acc = 0;
+            for (let i = 0; i < weights.length; i += 1) {
+                acc += weights[i];
+                if (r <= acc) return i + 1;
+            }
+            return 5;
+        };
 
-        <div class="history-section">
-            <h2 class="history-title">Scan History</h2>
-            <div class="history-list" id="historyList">
-                <div class="history-empty">No scans yet. Upload an image to get started!</div>
-            </div>
-        </div>
-    </div>
+        const shelfLifeFromStars = (avg) => {
+            if (avg >= 4.5) return "5-7 days";
+            if (avg >= 3.5) return "3-4 days";
+            if (avg >= 2.5) return "1-2 days";
+            return "Sell today";
+        };
 
-    <script>
-        let selectedFruit = null;
-        let scanHistory = JSON.parse(localStorage.getItem('scanHistory')) || [];
+        const discountFromStars = (avg) => {
+            if (avg >= 4.5) return { discount: 0, label: "Peak Ripeness - Full Price", badge: "green" };
+            if (avg >= 3.5) return { discount: 10, label: "Just Ripe - 10% Off", badge: "light" };
+            if (avg >= 2.5) return { discount: 30, label: "Sell Today - 30% Off", badge: "orange" };
+            return { discount: 50, label: "Past Peak - 50% Off", badge: "red" };
+        };
 
-        // Fruit dropdown selection
-        document.getElementById('fruitSelect').addEventListener('change', function(e) {
-            selectedFruit = e.target.value;
-        });
+        const summaryCopy = (produce, shelfLife, recommendation, defects) =>
+            `Team, this ${produce.label.toLowerCase()} is trending ${recommendation.label.toLowerCase()}. Shelf life estimates ${shelfLife}, with ${defects.includes("No") ? "no visible defects" : "minor surface blemishes"} noted. Consider ${recommendation.label.toLowerCase()} to keep shrink low.`;
 
-        // Scan Another button
-        document.getElementById('scanAnotherBtn').addEventListener('click', function() {
-            resetForm();
-        });
+        const StarRating = ({ value }) => {
+            const full = "★".repeat(value);
+            const empty = "☆".repeat(5 - value);
+            return h("span", { className: "stars", "aria-label": `${value} star rating` }, full + empty);
+        };
 
-        // File upload handling
-        document.getElementById('imageInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        const ConfidenceBar = ({ value }) =>
+            h("div", null,
+                h("div", { className: "confidence" },
+                    h("span", null, "Confidence"),
+                    h("span", null, `${value}%`)
+                ),
+                h("div", { className: "confidence-bar" },
+                    h("div", { className: "confidence-fill", style: { width: `${value}%` } })
+                )
+            );
 
-            // Show image preview
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const preview = document.getElementById('imagePreview');
-                const previewImage = document.getElementById('previewImage');
-                previewImage.src = e.target.result;
-                preview.classList.remove('hidden');
+        const BottomNav = () => {
+            const location = useLocation();
+            return h("nav", null,
+                navItems.map((item, idx) =>
+                    h(Link, {
+                        key: `${item.path}-${idx}`,
+                        to: item.path,
+                        className: `nav-btn ${location.pathname === item.path ? "active" : ""}`
+                    }, h("span", { style: { fontSize: "18px" } }, item.icon), item.label)
+                )
+            );
+        };
 
-                // Hide previous results
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('resultCard').classList.add('hidden');
+        const ScanPage = ({ onComplete }) => {
+            const [produce, setProduce] = useState(produceOptions[0].value);
+            const [price, setPrice] = useState("");
+            const [imageData, setImageData] = useState(defaultImage);
+            const [fileName, setFileName] = useState("Sample image");
+            const [analyzing, setAnalyzing] = useState(false);
+            const [error, setError] = useState("");
+            const navigate = useNavigate();
 
-                // Start analysis
-                setTimeout(() => {
-                    analyzeImage();
-                }, 100);
+            const handleImageChange = (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    setImageData(event.target?.result || defaultImage);
+                    setFileName(file.name);
             };
             reader.readAsDataURL(file);
-        });
+            };
 
-        function getActionRecommendations(ripeness, discount) {
-            const recommendations = [];
-            
-            if (ripeness === "Just Ripe") {
-                recommendations.push("Perfect for immediate consumption");
-                recommendations.push("Store at room temperature for 1-2 days");
-                recommendations.push("Best quality - no discount needed");
-            } else if (ripeness === "Peak Ripeness") {
-                recommendations.push("Consume within 24 hours for best taste");
-                if (discount > 0) {
-                    recommendations.push(`Great deal with ${discount}% discount`);
+            const runAnalysis = () => {
+                const selected = produceOptions.find((opt) => opt.value === produce);
+                if (!selected) {
+                    setError("Choose a produce item before scanning.");
+                    return;
                 }
-                recommendations.push("Store in refrigerator to slow ripening");
-            } else if (ripeness === "Overripe") {
-                recommendations.push("Use immediately or within a few hours");
-                recommendations.push(`Take advantage of ${discount}% discount`);
-                recommendations.push("Perfect for smoothies, baking, or preserves");
-                recommendations.push("Check for any soft spots before purchasing");
-            } else if (ripeness === "Past Peak") {
-                recommendations.push("Best for cooking or processing only");
-                recommendations.push(`Significant ${discount}% discount available`);
-                recommendations.push("Inspect carefully for spoilage");
-                recommendations.push("Use same day or discard");
-            }
-            
-            return recommendations;
-        }
+                setError("");
+                setAnalyzing(true);
 
-        function analyzeImage() {
-            // Show loading
-            const loading = document.getElementById('loading');
-            const resultCard = document.getElementById('resultCard');
-            
-            loading.classList.remove('hidden');
-            resultCard.classList.add('hidden');
-
-            // Mock analysis after 1 second
+                const delay = 1100 + Math.random() * 800;
             setTimeout(() => {
-                loading.classList.add('hidden');
-                
-                // Get selected fruit and price
-                const fruitSelect = document.getElementById('fruitSelect');
-                const selectedFruitName = fruitSelect.options[fruitSelect.selectedIndex].text;
-                const priceInput = document.getElementById('priceInput');
-                const originalPrice = parseFloat(priceInput.value) || 0;
-
-                // Random results
-                const ripenessOptions = ["Just Ripe", "Peak Ripeness", "Overripe", "Past Peak"];
-                const discountOptions = [0, 15, 30, 50];
-                
-                const randomRipeness = ripenessOptions[Math.floor(Math.random() * ripenessOptions.length)];
-                const randomDiscount = discountOptions[Math.floor(Math.random() * discountOptions.length)];
-
-                // Calculate prices
-                const discountAmount = (originalPrice * randomDiscount) / 100;
-                const finalPrice = originalPrice - discountAmount;
-
-                // Determine color based on ripeness
-                let colorClass = 'green';
-                if (randomRipeness === "Overripe") {
-                    colorClass = 'orange';
-                } else if (randomRipeness === "Past Peak") {
-                    colorClass = 'red';
-                } else if (randomRipeness === "Peak Ripeness" && randomDiscount > 0) {
-                    colorClass = 'yellow';
-                }
-
-                // Generate confidence score (75-98%)
-                const confidenceScore = Math.floor(Math.random() * 24) + 75;
-                
-                // Generate action recommendations based on ripeness
-                const recommendations = getActionRecommendations(randomRipeness, randomDiscount);
-
-                // Update result card
-                document.getElementById('ripenessLevel').textContent = randomRipeness;
-                document.getElementById('discount').textContent = randomDiscount > 0 ? `${randomDiscount}% Discount` : 'No Discount';
-                
-                // Update confidence score
-                document.getElementById('confidenceValue').textContent = `${confidenceScore}%`;
-                setTimeout(() => {
-                    document.getElementById('confidenceFill').style.width = `${confidenceScore}%`;
-                }, 100);
-                
-                // Update action recommendations
-                const actionList = document.getElementById('actionList');
-                actionList.innerHTML = recommendations.map(rec => `<li class="action-item">${rec}</li>`).join('');
-                
-                // Update price info
-                const priceInfo = document.getElementById('priceInfo');
-                if (originalPrice > 0) {
-                    document.getElementById('originalPriceDisplay').textContent = `$${originalPrice.toFixed(2)}`;
-                    document.getElementById('discountAmountDisplay').textContent = `-$${discountAmount.toFixed(2)}`;
-                    document.getElementById('finalPriceDisplay').textContent = `$${finalPrice.toFixed(2)}`;
-                    priceInfo.classList.remove('hidden');
-                } else {
-                    priceInfo.classList.add('hidden');
-                }
-                
-                resultCard.className = `result-card ${colorClass}`;
-                resultCard.classList.remove('hidden');
-
-                // Save to history
-                if (selectedFruitName && selectedFruitName !== '-- Select a fruit --') {
-                    const historyItem = {
-                        fruit: selectedFruitName,
-                        ripeness: randomRipeness,
-                        discount: randomDiscount,
-                        originalPrice: originalPrice,
-                        finalPrice: finalPrice,
-                        confidence: confidenceScore,
-                        timestamp: new Date().toLocaleString()
+                    const ripeness = weightedStar();
+                    const freshness = weightedStar();
+                    const avgStars = (ripeness + freshness) / 2;
+                    const defects = Math.random() < 0.9 ? "No defects! 👍" : "Minor defects detected ⚠️";
+                    const shelfLife = shelfLifeFromStars(avgStars);
+                    const recommendation = discountFromStars(avgStars);
+                    const confidence = Math.floor(Math.random() * 10) + 89;
+                    const originalPrice = parseFloat(price) || 0;
+                    const newPrice = originalPrice ? originalPrice * (1 - recommendation.discount / 100) : 0;
+                    const analysis = {
+                        id: Date.now(),
+                        produce: selected,
+                        ripeness,
+                        freshness,
+                        defects,
+                        shelfLife,
+                        recommendation,
+                        confidence,
+                        originalPrice,
+                        newPrice,
+                        imageData,
+                        fileName,
+                        timestamp: new Date().toLocaleString(),
+                        summary: summaryCopy(selected, shelfLife, recommendation, defects)
                     };
-                    scanHistory.unshift(historyItem);
-                    // Keep only last 10 scans
-                    if (scanHistory.length > 10) {
-                        scanHistory = scanHistory.slice(0, 10);
-                    }
-                    localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
-                    updateHistoryDisplay();
-                }
-            }, 1000);
-        }
+                    onComplete(analysis);
+                    setAnalyzing(false);
+                    navigate("/results");
+                }, delay);
+            };
 
-        function resetForm() {
-            // Reset form elements
-            document.getElementById('fruitSelect').value = '';
-            document.getElementById('priceInput').value = '';
-            document.getElementById('imageInput').value = '';
-            document.getElementById('imagePreview').classList.add('hidden');
-            document.getElementById('resultCard').classList.add('hidden');
-            document.getElementById('loading').classList.add('hidden');
-            selectedFruit = null;
-        }
+            return h("div", { className: "grid", style: { gap: "20px" } },
+                h("div", { className: "panel grid" },
+                    h("div", null,
+                        h("label", { htmlFor: "produce-select" }, "Produce Type"),
+                        h("select", {
+                            id: "produce-select",
+                            value: produce,
+                            onChange: (e) => setProduce(e.target.value)
+                        }, produceOptions.map((opt) =>
+                            h("option", { key: opt.value, value: opt.value }, `${opt.icon} ${opt.label}`)
+                        ))
+                    ),
+                    h("div", null,
+                        h("label", { htmlFor: "price-input" }, "Original Price ($)"),
+                        h("input", {
+                            id: "price-input",
+                            type: "number",
+                            min: 0,
+                            step: 0.01,
+                            placeholder: "Enter price per item",
+                            value: price,
+                            onChange: (e) => setPrice(e.target.value)
+                        })
+                    ),
+                    h("div", { className: "camera-card" },
+                        h("div", { className: "camera-preview" },
+                            h("img", { src: imageData, alt: "Produce preview" })
+                        ),
+                        h("div", { className: "camera-controls" },
+                            h("label", { className: "secondary-btn", title: "Upload image" },
+                                h("input", {
+                                    type: "file",
+                                    accept: "image/*",
+                                    style: { display: "none" },
+                                    onChange: handleImageChange
+                                }),
+                                "⬆️"
+                            ),
+                            h("button", {
+                                className: "circle-btn",
+                                onClick: runAnalysis,
+                                "aria-label": "Capture or upload"
+                            }, "●")
+                        ),
+                        analyzing && h("div", { className: "analyzing-overlay" },
+                            h("div", { className: "spinner" }),
+                            "Analyzing..."
+                        )
+                    ),
+                    error && h("div", { style: { color: "#b33a3a", fontWeight: 600 } }, error),
+                    h("button", { className: "primary-btn", onClick: runAnalysis }, "Capture & Analyze"),
+                    h("button", { className: "ghost-btn", onClick: () => setImageData(defaultImage) }, "Reset Preview")
+                )
+            );
+        };
 
-        function updateHistoryDisplay() {
-            const historyList = document.getElementById('historyList');
-            
-            if (scanHistory.length === 0) {
-                historyList.innerHTML = '<div class="history-empty">No scans yet. Upload an image to get started!</div>';
-                return;
+        const ResultsPage = ({ result, onRescan, onPriceUpdate }) => {
+            const [price, setPrice] = useState(result?.originalPrice ?? 0);
+            useEffect(() => {
+                if (result) setPrice(result.originalPrice ?? 0);
+            }, [result]);
+
+            if (!result) {
+                return h("div", { className: "empty-state" }, "Run a scan to view results.");
             }
 
-            historyList.innerHTML = scanHistory.map(item => {
-                // Extract emoji (first character) and name (rest)
-                const fruitParts = item.fruit.split(' ');
-                const fruitEmoji = fruitParts[0] || '🍎';
-                const fruitName = fruitParts.slice(1).join(' ') || item.fruit;
-                const confidence = item.confidence || 0;
-                return `
-                    <div class="history-item">
-                        <div class="history-item-info">
-                            <div class="history-item-fruit">${fruitEmoji} ${fruitName}</div>
-                            <div class="history-item-details">${item.ripeness} • ${item.discount}% off • ${confidence}% confidence • ${item.timestamp}</div>
-                        </div>
-                        <div class="history-item-price">
-                            ${item.originalPrice > 0 ? `$${item.finalPrice.toFixed(2)}` : 'N/A'}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+            const newPrice = price ? (price * (1 - result.recommendation.discount / 100)).toFixed(2) : "0.00";
+            const badgeClass = `badge ${result.recommendation.badge}`;
+            return h("div", { className: "grid", style: { gap: "20px" } },
+                h("div", { className: "result-hero" },
+                    h("div", { className: "result-image" },
+                        h("img", { src: result.imageData, alt: `${result.produce.label} scan` })
+                    ),
+                    h("div", { className: "result-title" },
+                        `${result.produce.icon} ${result.produce.label}`,
+                        h("span", { className: badgeClass }, result.recommendation.label)
+                    ),
+                    h("div", { className: "star-row", style: { display: "flex", gap: "12px" } },
+                        h("div", { className: "analysis-card", style: { flex: 1 } },
+                            h("h3", null, "Ripeness"),
+                            h(StarRating, { value: result.ripeness })
+                        ),
+                        h("div", { className: "analysis-card", style: { flex: 1 } },
+                            h("h3", null, "Freshness"),
+                            h(StarRating, { value: result.freshness })
+                        )
+                    ),
+                    h("div", { className: "stat-list" },
+                        h("div", null, `Defect Detection: ${result.defects}`),
+                        h("div", null, `Estimated Shelf Life: ${result.shelfLife}`),
+                        h("div", null, `Recommended Action: ${result.recommendation.label}`)
+                    ),
+                    h("div", { className: "analysis-card" },
+                        h("label", { htmlFor: "result-price" }, "Original Price ($)"),
+                        h("input", {
+                            id: "result-price",
+                            type: "number",
+                            min: 0,
+                            step: 0.01,
+                            value: price ? price.toString() : "",
+                            onChange: (e) => {
+                                const val = parseFloat(e.target.value) || 0;
+                                setPrice(val);
+                                onPriceUpdate(val);
+                            }
+                        }),
+                        h("div", { style: { marginTop: "12px", fontWeight: 700 } }, `Recommended Discount: ${result.recommendation.discount}%`),
+                        h("div", { style: { fontSize: "30px", marginTop: "6px", fontWeight: 800 } }, `New Price: $${newPrice}`)
+                    ),
+                    h("div", { className: "summary-box" }, result.summary),
+                    h(ConfidenceBar, { value: result.confidence })
+                ),
+                h("div", { className: "grid", style: { gap: "12px" } },
+                    h("button", { className: "primary-btn", style: { background: "#3bb273" }, onClick: () => alert("Discount applied to store system.") }, "Apply Discount"),
+                    h("button", { className: "ghost-btn", onClick: onRescan }, "Scan Another Item")
+                )
+            );
+        };
 
-        // Initialize history display on page load
-        updateHistoryDisplay();
+        const HistoryPage = ({ history, onClear }) => {
+            const [query, setQuery] = useState("");
+            const filtered = history.filter((entry) => entry.produce.label.toLowerCase().includes(query.toLowerCase()));
+            return h("div", null,
+                h("div", { className: "page-title" }, "Recent Scans"),
+                h("div", { className: "analysis-card" },
+                    h("label", { htmlFor: "history-search" }, "Search by produce"),
+                    h("input", {
+                        id: "history-search",
+                        placeholder: "e.g. Avocado",
+                        value: query,
+                        onChange: (e) => setQuery(e.target.value)
+                    }),
+                    h("button", { className: "ghost-btn", style: { marginTop: "10px" }, onClick: onClear }, "Clear All History")
+                ),
+                filtered.length === 0 ? h("div", { className: "empty-state" }, "No scans yet.") :
+                    h("div", { className: "history-list" },
+                        filtered.map((entry) =>
+                            h("div", { key: entry.id, className: "history-card" },
+                                h("div", { className: "history-thumb" },
+                                    h("img", { src: entry.imageData, alt: entry.produce.label })
+                                ),
+                                h("div", { className: "history-info" },
+                                    h("div", { className: "history-title" }, `${entry.produce.icon} ${entry.produce.label}`),
+                                    h("div", { className: "history-meta" },
+                                        `${entry.timestamp} • ${entry.recommendation.discount}% off • ${entry.shelfLife}`
+                                    )
+                                ),
+                                h("div", { className: "history-price" },
+                                    entry.originalPrice ? `$${(entry.originalPrice * (1 - entry.recommendation.discount / 100)).toFixed(2)}` : "N/A"
+                                )
+                            )
+                        )
+                    )
+            );
+        };
+
+        const DashboardPage = ({ history }) => {
+            const totals = useMemo(() => {
+                const totalScans = history.length;
+                const discountValue = history.reduce((acc, entry) => {
+                    if (!entry.originalPrice) return acc;
+                    return acc + entry.originalPrice * (entry.recommendation.discount / 100);
+                }, 0);
+                const avgDiscount = totalScans ? history.reduce((acc, entry) => acc + entry.recommendation.discount, 0) / totalScans : 0;
+                const itemsFull = history.filter((entry) => entry.recommendation.discount === 0).length;
+                const discountBuckets = { 0: 0, 10: 0, 30: 0, 50: 0 };
+                history.forEach((entry) => {
+                    discountBuckets[entry.recommendation.discount] += 1;
+                });
+                const produceCounts = history.reduce((acc, entry) => {
+                    acc[entry.produce.label] = (acc[entry.produce.label] || 0) + 1;
+                    return acc;
+                }, {});
+                return {
+                    totalScans,
+                    discountValue,
+                    avgDiscount,
+                    itemsFull,
+                    itemsDiscounted: totalScans - itemsFull,
+                    discountBuckets,
+                    produceCounts
+                };
+            }, [history]);
+
+            const pieGradient = useMemo(() => {
+                const entries = Object.entries(totals.produceCounts);
+                if (!entries.length) return "conic-gradient(#f0d9bd 0deg 360deg)";
+                const total = entries.reduce((acc, [, count]) => acc + count, 0);
+                let current = 0;
+                const segments = entries.map(([, count], idx) => {
+                    const colors = ["#f8c26a", "#f49d6e", "#f06f6f", "#c6e39a", "#92d8d8", "#f7e58b", "#c3aed6"];
+                    const angle = (count / total) * 360;
+                    const start = current;
+                    const end = current + angle;
+                    current = end;
+                    return `${colors[idx % colors.length]} ${start}deg ${end}deg`;
+                }).join(", ");
+                return `conic-gradient(${segments})`;
+            }, [totals.produceCounts]);
+
+            return h("div", { className: "grid", style: { gap: "18px" } },
+                h("div", { className: "page-title" }, "Today's Performance"),
+                h("div", { className: "grid", style: { gap: "12px" } },
+                    [
+                        { label: "Total Scans", value: totals.totalScans || 0 },
+                        { label: "Total Discount Value", value: `$${totals.discountValue.toFixed(2)}` },
+                        { label: "Avg Discount", value: `${totals.avgDiscount.toFixed(0)}%` },
+                        { label: "Items at Full Price", value: totals.itemsFull },
+                        { label: "Items Discounted", value: totals.itemsDiscounted },
+                        { label: "Estimated waste prevented", value: totals.totalScans ? "12 lbs" : "0 lbs" },
+                        { label: "Revenue recovered", value: totals.totalScans ? "$87.30" : "$0.00" }
+                    ].map((stat) =>
+                        h("div", { key: stat.label, className: "analysis-card" },
+                            h("div", { style: { fontSize: "12px", color: "#9a8d81", textTransform: "uppercase" } }, stat.label),
+                            h("div", { style: { fontSize: "24px", fontWeight: 800 } }, stat.value)
+                        )
+                    )
+                ),
+                h("div", { className: "chart-card" },
+                    h("h3", { style: { marginBottom: "12px" } }, "Discount Distribution"),
+                    Object.entries(totals.discountBuckets).map(([percent, count]) => {
+                        const fillPercent = totals.totalScans ? (count / totals.totalScans) * 100 : 0;
+                        const palette = discountPalette[percent] || { color: "#ebd9c9" };
+                        return h("div", { key: percent, className: "bar-row" },
+                            h("span", { style: { width: "60px", fontSize: "14px" } }, `${percent}%`),
+                            h("div", { className: "bar" },
+                                h("div", { className: "bar-fill", style: { width: `${fillPercent}%`, background: palette.color } })
+                            ),
+                            h("span", { style: { fontWeight: 700 } }, count)
+                        );
+                    })
+                ),
+                h("div", { className: "chart-card" },
+                    h("h3", { style: { marginBottom: "12px" } }, "Produce Mix"),
+                    h("div", { className: "pie", style: { background: pieGradient } }),
+                    h("div", { className: "pie-legend" },
+                        Object.entries(totals.produceCounts).map(([label, count]) =>
+                            h("div", { key: label }, `${label}: ${count}`)
+                        )
+                    )
+                )
+            );
+        };
+
+        const SettingsPage = () =>
+            h("div", { className: "grid", style: { gap: "16px" } },
+                h("div", { className: "page-title" }, "How to Use"),
+                h("div", { className: "analysis-card" },
+                    h("ol", { style: { paddingLeft: "18px", lineHeight: 1.6 } },
+                        h("li", null, "Select produce type & enter original price."),
+                        h("li", null, "Capture or upload a clear photo."),
+                        h("li", null, "Review automated assessment & pricing recommendation."),
+                        h("li", null, "Apply discount to sync with in-store labels.")
+                    )
+                ),
+                h("div", { className: "analysis-card" },
+                    h("h3", null, "Freshness Rating Guide"),
+                    ["5 stars = Peak Ripeness → Full Price", "4 stars = Just Ripe → 10% off", "3 stars = Sell Today → 30% off", "1-2 stars = Past Peak → 50% off"].map((item) =>
+                        h("div", { key: item }, item)
+                    )
+                ),
+                h("div", { className: "analysis-card" },
+                    h("h3", null, "Store Information"),
+                    h("p", null, "Store #4523"),
+                    h("p", null, "Produce Department"),
+                    h("p", null, "Contact: produce.manager@groceryco.com")
+                ),
+                h("div", { className: "analysis-card" },
+                    h("h3", null, "About"),
+                    h("p", null, "Prototype tool demonstrating freshness insights, pricing guidance, and waste reduction for grocery teams. No real computer vision is performed.")
+                )
+            );
+
+        const App = () => {
+            const [history, setHistory] = useState(() => {
+                try {
+                    return JSON.parse(localStorage.getItem("produce-history")) || [];
+                } catch {
+                    return [];
+                }
+            });
+            const [result, setResult] = useState(null);
+
+            useEffect(() => {
+                localStorage.setItem("produce-history", JSON.stringify(history));
+            }, [history]);
+
+            const handleScanComplete = (analysis) => {
+                setResult(analysis);
+                setHistory((prev) => [analysis, ...prev].slice(0, 15));
+            };
+
+            const clearHistory = () => {
+                if (confirm("Clear all scan history?")) {
+                    setHistory([]);
+                }
+            };
+
+            const ScanRoute = () => h(ScanPage, { onComplete: handleScanComplete });
+
+            const ResultsRoute = () => {
+                const navigate = useNavigate();
+                return h(ResultsPage, {
+                    result,
+                    onRescan: () => navigate("/scan"),
+                    onPriceUpdate: (value) => setResult((prev) => prev ? { ...prev, originalPrice: value, newPrice: value * (1 - (prev.recommendation.discount / 100)) } : prev)
+                });
+            };
+
+            const HistoryRoute = () => h(HistoryPage, { history, onClear: clearHistory });
+            const DashboardRoute = () => h(DashboardPage, { history });
+            const SettingsRoute = () => h(SettingsPage);
+
+            return h(HashRouter, null,
+                h("div", { className: "app-shell" },
+                    h("header", null,
+                        h("span", null, "PRODUCE OPS"),
+                        h("h1", null, "Produce Scanner")
+                    ),
+                    h("main", { className: "page-content" },
+                        h(Routes, null,
+                            h(Route, { path: "/", element: h(Navigate, { to: "/home", replace: true }) }),
+                            h(Route, { path: "/home", element: h(ScanRoute) }),
+                            h(Route, { path: "/scan", element: h(ScanRoute) }),
+                            h(Route, { path: "/results", element: h(ResultsRoute) }),
+                            h(Route, { path: "/history", element: h(HistoryRoute) }),
+                            h(Route, { path: "/dashboard", element: h(DashboardRoute) }),
+                            h(Route, { path: "/settings", element: h(SettingsRoute) })
+                        )
+                    ),
+                    h(BottomNav, null)
+                )
+            );
+        };
+
+        const root = createRoot(document.getElementById("root"));
+        root.render(h(App, null));
     </script>
 </body>
 </html>

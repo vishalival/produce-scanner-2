@@ -84,9 +84,9 @@ shelfLife (string), defects (string, <=20 words), summary (string), estimatedPri
         ],
         generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 1200
-        },
-        responseMimeType: "application/json"
+            maxOutputTokens: 1200,
+            responseMimeType: "application/json"
+        }
     };
 
     const response = await fetch(url, {

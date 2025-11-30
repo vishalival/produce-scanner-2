@@ -570,27 +570,6 @@
             { value: "mango", label: "Mango", icon: "🥭" }
         ];
 
-        const slugify = (value = "") =>
-            value
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")
-                .replace(/^-+|-+$/g, "") || "produce";
-
-        const titleCase = (value = "") =>
-            value
-                .toLowerCase()
-                .split(" ")
-                .filter(Boolean)
-                .map((word) => word[0]?.toUpperCase() + word.slice(1))
-                .join(" ");
-
-        const matchProduceOption = (name = "") => {
-            const lowered = name.toLowerCase();
-            return produceOptions.find((opt) =>
-                lowered.includes(opt.value) || lowered.includes(opt.label.toLowerCase())
-            );
-        };
-
         const defaultImage = "https://i5.samsclubimages.com/asr/e88cd487-1e1b-4373-9808-de4484446960.89a37ef2c5eeab632d4297cc90162d61.jpeg?odnHeight=640&odnWidth=640&odnBg=FFFFFF";
 
         const navItems = [
@@ -636,6 +615,97 @@
         const summaryCopy = (produce, shelfLife, recommendation, defects) =>
             `Team, this ${produce.label.toLowerCase()} is trending ${recommendation.label.toLowerCase()}. Shelf life estimates ${shelfLife}, with ${defects.includes("No") ? "no visible defects" : "minor surface blemishes"} noted. Consider ${recommendation.label.toLowerCase()} to keep shrink low.`;
 
+        const clampRating = (value) => {
+            const num = Number(value);
+            if (Number.isNaN(num)) return null;
+            return Math.max(1, Math.min(5, Math.round(num)));
+        };
+
+        const clampConfidence = (value) => {
+            const num = Number(value);
+            if (Number.isNaN(num)) return 90;
+            return Math.max(30, Math.min(100, Math.round(num)));
+        };
+
+        const extractJsonFromText = (text) => {
+            if (!text) return null;
+            const cleaned = text
+                .replace(/```json/gi, "```")
+                .replace(/```/g, "")
+                .replace(/\n/g, " ")
+                .trim();
+            const start = cleaned.indexOf("{");
+            const end = cleaned.lastIndexOf("}");
+            const segment = start !== -1 && end !== -1 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+            try {
+                return JSON.parse(segment);
+            } catch {
+                try {
+                    return JSON.parse(cleaned);
+                } catch {
+                    return null;
+                }
+            }
+        };
+
+        const toErrorMessage = (err) => {
+            if (!err) return "Unknown error";
+            if (typeof err === "string") return err;
+            if (err.message) return err.message;
+            try {
+                return JSON.stringify(err);
+            } catch {
+                return String(err);
+            }
+        };
+
+        const defaultModelSettings = {
+            endpoint: "http://localhost:8787/analyze",
+            model: "gemini-2.5-pro"
+        };
+
+        const analyzeWithVisionModel = async ({ imageData, settings }) => {
+            const endpoint = settings?.endpoint || defaultModelSettings.endpoint;
+            if (!endpoint) throw new Error("Configure a local analyzer endpoint.");
+
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    imageData,
+                    model: settings?.model || defaultModelSettings.model
+                })
+            });
+
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                const rawMessage = payload?.error || payload?.message || "Vision model call failed.";
+                const normalizedMessage = typeof rawMessage === "string" ? rawMessage : JSON.stringify(rawMessage);
+                throw new Error(normalizedMessage);
+            }
+
+            const choice = payload.choices?.[0];
+            const assistantContent = choice?.message?.content;
+            let combinedText = "";
+            if (typeof assistantContent === "string") {
+                combinedText = assistantContent;
+            } else if (Array.isArray(assistantContent)) {
+                combinedText = assistantContent
+                    .map((chunk) => chunk.text || chunk.content || "")
+                    .join("\n");
+            }
+
+            const parsed = extractJsonFromText(combinedText.trim());
+            if (!parsed) {
+                throw new Error("Model response did not include readable JSON.");
+            }
+
+            return parsed;
+        };
+
         const recipeLibrary = {
             banana: {
                 peak: ["Banana Overnight Oats", "Caramelized Banana Yogurt Bowls"],
@@ -660,114 +730,19 @@
             return recipes.past;
         };
 
-        const clampRating = (value) => {
-            const num = Number(value);
-            if (Number.isNaN(num)) return null;
-            return Math.max(1, Math.min(5, Math.round(num)));
-        };
-
-        const clampConfidence = (value) => {
-            const num = Number(value);
-            if (Number.isNaN(num)) return 90;
-            return Math.max(30, Math.min(100, Math.round(num)));
-        };
-
-        const extractJsonFromText = (text) => {
-            if (!text) return null;
-            const cleaned = text
-                .replace(/```json/gi, "```")
-                .replace(/```/g, "")
-                .replace(/\n/g, " ")
-                .trim();
-            const start = text.indexOf("{");
-            const end = text.lastIndexOf("}");
-            const segment = start !== -1 && end !== -1 && end > start ? text.slice(start, end + 1) : cleaned;
-            try {
-                return JSON.parse(segment);
-            } catch {
-                try {
-                    return JSON.parse(cleaned);
-                } catch {
-                    return null;
-                }
+        const produceFromName = (name) => {
+            const normalized = (name || "").trim();
+            if (!normalized) {
+                return { value: "detected-produce", label: "Detected Produce", icon: "🥕" };
             }
-        };
-
-        const toErrorMessage = (err) => {
-            if (!err) return "Unknown error";
-            if (typeof err === "string") return err;
-            if (typeof err.message === "string" && err.message.trim()) return err.message;
-            try {
-                return JSON.stringify(err);
-            } catch {
-                return String(err);
+            const match = produceOptions.find((opt) => normalized.toLowerCase().includes(opt.value));
+            if (match) {
+                return { ...match, label: normalized };
             }
-        };
-
-        const defaultModelSettings = {
-            endpoint: "http://localhost:8787/analyze",
-            model: "gemini-2.5-flash"
-        };
-
-        const SETTINGS_KEY = "produce-vision-settings";
-
-        const analyzeWithVisionModel = async ({ imageData, produce, settings }) => {
-            const endpoint = settings?.endpoint || defaultModelSettings.endpoint;
-            if (!endpoint) {
-                throw new Error("Configure a local analyzer endpoint in Settings.");
-            }
-
-            const response = await fetch(endpoint, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    imageData,
-                    produceLabel: produce.label,
-                    produceValue: produce.value,
-                    model: settings?.model || defaultModelSettings.model
-                })
-            });
-
-            const payload = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-                console.error("Vision API error payload", {
-                    status: response.status,
-                    payload
-                });
-                const rawMessage = payload?.error || payload?.message || "Vision model call failed.";
-                const normalizedMessage = typeof rawMessage === "string" ? rawMessage : JSON.stringify(rawMessage);
-                throw new Error(normalizedMessage);
-            }
-
-            const choice = payload.choices?.[0];
-            const assistantContent = choice?.message?.content;
-            console.log("Vision API assistant content", assistantContent);
-            let combinedText = "";
-            if (typeof assistantContent === "string") {
-                combinedText = assistantContent;
-            } else if (Array.isArray(assistantContent)) {
-                combinedText = assistantContent
-                    .map((chunk) => chunk.text || chunk.content || "")
-                    .join("\n");
-            }
-
-            const parsed = extractJsonFromText(combinedText.trim());
-            if (!parsed) {
-                throw new Error("Model response did not include readable JSON.");
-            }
-
             return {
-                ripeness: clampRating(parsed.ripeness),
-                freshness: clampRating(parsed.freshness),
-                confidence: clampConfidence(parsed.confidence),
-                defects: typeof parsed.defects === "string" ? parsed.defects : "",
-                shelfLife: typeof parsed.shelfLife === "string" ? parsed.shelfLife : "",
-                summary: typeof parsed.summary === "string" ? parsed.summary : "",
-                produceName: typeof parsed.produceName === "string" ? parsed.produceName.trim() : "",
-                estimatedPrice: typeof parsed.estimatedPrice === "number" ? parsed.estimatedPrice : Number(parsed.estimatedPrice)
+                value: normalized.toLowerCase().replace(/\s+/g, "-") || "detected-produce",
+                label: normalized,
+                icon: "🥕"
             };
         };
 
@@ -810,7 +785,7 @@
             );
         };
 
-        const ScanPage = ({ onComplete, analyzeProduce, settings }) => {
+        const ScanPage = ({ onComplete, analyzeProduce }) => {
             const [price, setPrice] = useState("");
             const [imageData, setImageData] = useState(defaultImage);
             const [fileName, setFileName] = useState("Sample image");
@@ -836,12 +811,11 @@
 
                 try {
                     const analysis = await analyzeProduce({
-                        produce: produceOptions[0],
                         priceValue: parseFloat(price) || 0,
                         imageData,
                         fileName
                     });
-                    setLastDetected(analysis?.produce?.label || "");
+                    setLastDetected(analysis?.produce?.label || analysis?.detectedProduceName || "");
                     onComplete(analysis);
                     navigate("/results");
                 } catch (modelError) {
@@ -856,9 +830,15 @@
                 h("div", { className: "panel grid" },
                     h("div", null,
                         h("label", null, "Produce Type"),
-                        h("div", { style: { padding: "12px 16px", borderRadius: "16px", background: "#fdf6ed", border: "1px solid #f0dccc", fontWeight: 600 } },
-                            lastDetected ? `Detected: ${lastDetected}` : "Auto-detected after scan"
-                        ),
+                        h("div", {
+                            style: {
+                                padding: "12px 16px",
+                                borderRadius: "16px",
+                                background: "#fdf6ed",
+                                border: "1px solid #f0dccc",
+                                fontWeight: 600
+                            }
+                        }, lastDetected ? `Detected: ${lastDetected}` : "Auto-detected after scan"),
                         h("p", { style: { marginTop: "6px", fontSize: "13px", color: "#8c7a6c" } }, "No selection needed—the vision model will identify the produce automatically.")
                     ),
                     h("div", null,
@@ -960,9 +940,6 @@
                                 onPriceUpdate(val);
                             }
                         }),
-                        result.detectedProduceName && result.originalPrice
-                            ? h("div", { style: { marginTop: "6px", color: "#7a6f63", fontSize: "13px" } }, `Suggested price from vision model: $${result.originalPrice.toFixed(2)}`)
-                            : null,
                         h("div", { style: { marginTop: "12px", fontWeight: 700 } }, `Recommended Discount: ${result.recommendation.discount}%`),
                         h("div", { style: { fontSize: "30px", marginTop: "6px", fontWeight: 800 } }, `New Price: $${newPrice}`)
                     ),
@@ -1107,53 +1084,15 @@
             );
         };
 
-        const SettingsPage = ({ settings, onSave }) => {
-            const [endpointInput, setEndpointInput] = useState(settings?.endpoint || defaultModelSettings.endpoint);
-            const [status, setStatus] = useState("");
-
-            const handleSave = () => {
-                onSave({
-                    endpoint: endpointInput.trim() || defaultModelSettings.endpoint,
-                    model: defaultModelSettings.model
-                });
-                setStatus("Settings saved locally.");
-                setTimeout(() => setStatus(""), 2400);
-            };
-
-            return h("div", { className: "grid", style: { gap: "16px" } },
-                h("div", { className: "page-title" }, "Settings & Guides"),
-                h("div", { className: "analysis-card grid", style: { gap: "12px" } },
-                    h("h3", null, "Vision Model Configuration"),
-                    h("p", { style: { color: "#7f736a", fontSize: "14px", lineHeight: 1.5 } },
-                        "Point the app at a local proxy (or remote endpoint you control). Model selection is fixed to the recommended Gemini tier."
-                    ),
-                    h("label", { htmlFor: "proxy-endpoint" }, "Analyzer Endpoint"),
-                    h("input", {
-                        id: "proxy-endpoint",
-                        value: endpointInput,
-                        onChange: (e) => setEndpointInput(e.target.value),
-                        placeholder: "http://localhost:8787/analyze"
-                    }),
-                    h("div", { style: { marginTop: "4px", fontSize: "14px", color: "#7f736a" } }, "Model: gemini-2.5-flash (locked)"),
-                    h("button", { className: "primary-btn", onClick: handleSave }, "Save Settings"),
-                    status && h("div", { style: { color: "#3b7c2f", fontWeight: 600 } }, status)
-                ),
+        const SettingsPage = () =>
+            h("div", { className: "grid", style: { gap: "16px" } },
+                h("div", { className: "page-title" }, "How to Use"),
                 h("div", { className: "analysis-card" },
-                    h("h3", null, "Start the Local Proxy"),
                     h("ol", { style: { paddingLeft: "18px", lineHeight: 1.6 } },
-                        h("li", null, "Install dependencies: Node 18+ recommended."),
-                        h("li", null, "Export your Gemini API key once in the shell: export GEMINI_API_KEY=ai-..."),
-                        h("li", null, "Run: node local-proxy.js (or PORT=8787 node local-proxy.js)."),
-                        h("li", null, "Leave the proxy running while you test the UI.")
-                    )
-                ),
-                h("div", { className: "analysis-card" },
-                    h("h3", null, "How to Use"),
-                    h("ol", { style: { paddingLeft: "18px", lineHeight: 1.6 } },
-                        h("li", null, "Select produce type & enter original price."),
-                        h("li", null, "Capture or upload a clear photo."),
-                        h("li", null, "Run the analysis to pull vision-model scores."),
-                        h("li", null, "Apply discount to sync with in-store labels.")
+                        h("li", null, "Capture or upload a clear photo of the item."),
+                        h("li", null, "Optionally enter the current price (the model detects the produce automatically)."),
+                        h("li", null, "Run the scan to fetch Gemini analysis through the local proxy."),
+                        h("li", null, "Review guidance and apply discounts in your store system.")
                     )
                 ),
                 h("div", { className: "analysis-card" },
@@ -1169,12 +1108,11 @@
                 ),
                 h("div", { className: "analysis-card" },
                     h("h3", null, "About"),
-                    h("p", null, "Prototype tool demonstrating freshness insights, pricing guidance, and waste reduction for grocery teams. Vision results powered by the configured Gemini endpoint."),
+                    h("p", null, "Prototype tool demonstrating freshness insights, pricing guidance, and waste reduction for grocery teams. No real computer vision is performed."),
                     h("p", { style: { marginTop: "12px", fontWeight: 600 } }, "Cornell Tech Product Studio · Team 23"),
                     h("p", null, "Authors: Wuchen Li, Matt Shapiro, Audrey Tjokro, Michael Twersky, Vishali Vallioor")
                 )
             );
-        };
 
         const App = () => {
             const [history, setHistory] = useState(() => {
@@ -1185,55 +1123,44 @@
                 }
             });
             const [result, setResult] = useState(null);
-            const [llmSettings, setLlmSettings] = useState(() => {
-                try {
-                    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
-                    return { ...defaultModelSettings, ...saved, model: defaultModelSettings.model };
-                } catch {
-                    return defaultModelSettings;
-                }
-            });
+            const [llmSettings] = useState(defaultModelSettings);
 
             useEffect(() => {
                 localStorage.setItem("produce-history", JSON.stringify(history));
             }, [history]);
 
-            useEffect(() => {
-                localStorage.setItem(SETTINGS_KEY, JSON.stringify(llmSettings));
-            }, [llmSettings]);
+            const analyzeProduce = async ({ priceValue, imageData, fileName }) => {
+                const parsed = await analyzeWithVisionModel({
+                    imageData,
+                    settings: llmSettings
+                });
 
-            const handleScanComplete = (analysis) => {
-                setResult(analysis);
-                setHistory((prev) => [analysis, ...prev].slice(0, 15));
-            };
-
-            const analyzeProduce = async ({ produce, priceValue, imageData, fileName }) => {
-                const modelResult = await analyzeWithVisionModel({ imageData, produce, settings: llmSettings });
-                const detectedName = modelResult.produceName || "";
-                const matched = detectedName ? matchProduceOption(detectedName) : null;
-                const fallbackLabel = detectedName ? titleCase(detectedName) : produceOptions[0].label;
-                const produceMeta = matched || {
-                    value: slugify(detectedName) || slugify(fallbackLabel),
-                    label: fallbackLabel,
-                    icon: matched?.icon || "🛒"
-                };
-                const ripeness = modelResult.ripeness ?? weightedStar();
-                const freshness = modelResult.freshness ?? weightedStar();
+                const ripeness = clampRating(parsed.ripeness) ?? weightedStar();
+                const freshness = clampRating(parsed.freshness) ?? weightedStar();
                 const avgStars = (ripeness + freshness) / 2;
-                const shelfLife = modelResult.shelfLife || shelfLifeFromStars(avgStars);
+                const shelfLife = typeof parsed.shelfLife === "string" && parsed.shelfLife.trim()
+                    ? parsed.shelfLife.trim()
+                    : shelfLifeFromStars(avgStars);
+                const defects = typeof parsed.defects === "string" && parsed.defects.trim()
+                    ? parsed.defects.trim()
+                    : "No visible defects";
                 const recommendation = discountFromStars(avgStars);
-                const confidence = modelResult.confidence ?? (Math.floor(Math.random() * 10) + 89);
-                const defects = modelResult.defects || "No visible defects.";
-                const summary = modelResult.summary || summaryCopy(produceMeta, shelfLife, recommendation, defects);
-                const recipes = getRecipeIdeas(produceMeta.value, avgStars);
-                const originalPrice = Number.isFinite(modelResult.estimatedPrice)
-                    ? Number(modelResult.estimatedPrice)
-                    : (priceValue || 0);
+                const confidence = clampConfidence(parsed.confidence);
+                const produceName = typeof parsed.produceName === "string" ? parsed.produceName.trim() : "";
+                const produce = produceFromName(produceName);
+                const summary = typeof parsed.summary === "string" && parsed.summary.trim()
+                    ? parsed.summary.trim()
+                    : summaryCopy(produce, shelfLife, recommendation, defects);
+                const estimatedPrice = typeof parsed.estimatedPrice === "number"
+                    ? parsed.estimatedPrice
+                    : Number(parsed.estimatedPrice);
+                const fallbackPrice = Number.isFinite(estimatedPrice) ? estimatedPrice : 0;
+                const originalPrice = priceValue || fallbackPrice;
                 const newPrice = originalPrice ? originalPrice * (1 - recommendation.discount / 100) : 0;
 
                 return {
                     id: Date.now(),
-                    produce: produceMeta,
+                    produce,
                     ripeness,
                     freshness,
                     defects,
@@ -1246,9 +1173,15 @@
                     fileName,
                     timestamp: new Date().toLocaleString(),
                     summary,
-                    recipes,
-                    detectedProduceName: detectedName || produceMeta.label
+                    recipes: getRecipeIdeas(produce.value, avgStars),
+                    detectedProduceName: produceName || produce.label,
+                    estimatedPrice: originalPrice
                 };
+            };
+
+            const handleScanComplete = (analysis) => {
+                setResult(analysis);
+                setHistory((prev) => [analysis, ...prev].slice(0, 15));
             };
 
             const clearHistory = () => {
@@ -1257,13 +1190,7 @@
                 }
             };
 
-            const updateSettings = (updates) => setLlmSettings((prev) => ({
-                ...prev,
-                ...updates,
-                model: defaultModelSettings.model
-            }));
-
-            const ScanRoute = () => h(ScanPage, { onComplete: handleScanComplete, analyzeProduce, settings: llmSettings });
+            const ScanRoute = () => h(ScanPage, { onComplete: handleScanComplete, analyzeProduce });
 
             const ResultsRoute = () => {
                 const navigate = useNavigate();
@@ -1276,7 +1203,7 @@
 
             const HistoryRoute = () => h(HistoryPage, { history, onClear: clearHistory });
             const DashboardRoute = () => h(DashboardPage, { history });
-            const SettingsRoute = () => h(SettingsPage, { settings: llmSettings, onSave: updateSettings });
+            const SettingsRoute = () => h(SettingsPage);
 
             return h(HashRouter, null,
                 h("div", { className: "app-shell" },

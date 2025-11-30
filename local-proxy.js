@@ -5,7 +5,7 @@ const https = require("https");
 
 const PORT = Number(process.env.PORT) || 8787;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-pro";
 const GEMINI_BASE = process.env.GEMINI_API_BASE || "https://generativelanguage.googleapis.com/v1";
 const DEFAULT_IMAGE = "https://i5.samsclubimages.com/asr/e88cd487-1e1b-4373-9808-de4484446960.89a37ef2c5eeab632d4297cc90162d61.jpeg?odnHeight=640&odnWidth=640&odnBg=FFFFFF";
 const MAX_BODY_BYTES = 15 * 1024 * 1024; // 15MB
@@ -63,7 +63,7 @@ const fetchImageAsInlineData = async (imageData) => {
     };
 };
 
-const callGemini = async ({ imageData, produceLabel, model }) => {
+const callGemini = async ({ imageData, model }) => {
     const targetModel = (model || GEMINI_MODEL).replace(/^models\//, "");
     const inlineData = await fetchImageAsInlineData(imageData);
     const prompt = `You are a grocery produce quality specialist. Inspect the attached produce photo, identify the produce type, and evaluate it.
@@ -85,7 +85,8 @@ shelfLife (string), defects (string, <=20 words), summary (string), estimatedPri
         generationConfig: {
             temperature: 0.2,
             maxOutputTokens: 1200
-        }
+        },
+        responseMimeType: "application/json"
     };
 
     const response = await fetch(url, {
@@ -154,17 +155,11 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
-        const { imageData, produceLabel, model } = payload || {};
-        if (!produceLabel) {
-            res.writeHead(400, { ...corsHeaders, "Content-Type": "application/json" });
-            res.end(JSON.stringify({ error: "Missing produce label in request body." }));
-            return;
-        }
+        const { imageData, model } = payload || {};
 
         try {
             const geminiResult = await callGemini({
                 imageData,
-                produceLabel,
                 model: model || GEMINI_MODEL
             });
 
